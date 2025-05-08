@@ -1,68 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Button, Portal, Modal } from 'react-native-paper';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Image, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  GestureHandlerRootView,
-  PanGestureHandler,
-  PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  useAnimatedGestureHandler,
-} from 'react-native-reanimated';
 
 interface ClothingItem {
   id: string;
   imageUri: string;
   category: string;
   createdAt: string;
+  position?: {
+    x: number;
+    y: number;
+  };
 }
 
-interface DraggableItemProps {
+const DraggableItem: React.FC<{
   item: ClothingItem;
   index: number;
-}
+  onPositionChange: (id: string, x: number, y: number) => void;
+}> = ({ item, index, onPositionChange }) => {
+  const [isDragging, setIsDragging] = useState(false);
 
-const DraggableItem: React.FC<DraggableItemProps> = ({ item, index }) => {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  const handleMouseDown = (e: any) => {
+    setIsDragging(true);
+    const startX = e.pageX - (item.position?.x || 0);
+    const startY = e.pageY - (item.position?.y || 0);
 
-  const panGestureEvent = useAnimatedGestureHandler<PanGestureHandlerGestureEvent>({
-    onStart: (_, context: any) => {
-      context.translateX = translateX.value;
-      context.translateY = translateY.value;
-    },
-    onActive: (event, context: any) => {
-      translateX.value = context.translateX + event.translationX;
-      translateY.value = context.translateY + event.translationY;
-    },
-    onEnd: () => {
-      // 可以添加边界检查等逻辑
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-      ],
+    const handleMouseMove = (e: any) => {
+      const x = e.pageX - startX;
+      const y = e.pageY - startY;
+      onPositionChange(item.id, x, y);
     };
-  });
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   return (
-    <PanGestureHandler onGestureEvent={panGestureEvent}>
-      <Animated.View style={[styles.canvasItem, animatedStyle]}>
-        <Image
-          source={{ uri: item.imageUri }}
-          style={styles.canvasImage}
-          resizeMode="contain"
-        />
-      </Animated.View>
-    </PanGestureHandler>
+    <View
+      style={[
+        styles.canvasItem,
+        {
+          left: item.position?.x || 0,
+          top: item.position?.y || 0,
+          cursor: isDragging ? 'grabbing' : 'grab',
+        },
+      ]}
+      onTouchStart={handleMouseDown}
+      onMouseDown={handleMouseDown}
+    >
+      <Image
+        source={{ uri: item.imageUri }}
+        style={styles.canvasImage}
+        resizeMode="contain"
+      />
+    </View>
   );
 };
 
@@ -70,7 +68,19 @@ const OutfitsScreen = () => {
   const [clothes, setClothes] = useState<ClothingItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('未分类');
   const [selectedItems, setSelectedItems] = useState<ClothingItem[]>([]);
-  
+
+  useEffect(() => {
+    loadClothesFromStorage();
+  }, []);
+
+  const handlePositionChange = (id: string, x: number, y: number) => {
+    setSelectedItems(items =>
+      items.map(item =>
+        item.id === id ? { ...item, position: { x, y } } : item
+      )
+    );
+  };
+
   // 加载衣橱数据
   useEffect(() => {
     loadClothesFromStorage();
@@ -92,7 +102,10 @@ const OutfitsScreen = () => {
 
   // 添加衣物到画布
   const addItemToCanvas = (item: ClothingItem) => {
-    setSelectedItems([...selectedItems, item]);
+    setSelectedItems([
+      ...selectedItems,
+      { ...item, position: { x: 0, y: 0 } }
+    ]);
   };
 
   // 渲染分类选择器
@@ -141,19 +154,24 @@ const OutfitsScreen = () => {
   const renderCanvas = () => (
     <View style={styles.canvas}>
       {selectedItems.map((item, index) => (
-        <DraggableItem key={`${item.id}-${index}`} item={item} index={index} />
+        <DraggableItem
+          key={`${item.id}-${index}`}
+          item={item}
+          index={index}
+          onPositionChange={handlePositionChange}
+        />
       ))}
     </View>
   );
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <View style={styles.container}>
       {renderCanvas()}
       <View style={styles.bottomPanel}>
         {renderCategories()}
         {renderClothingList()}
       </View>
-    </GestureHandlerRootView>
+    </View>
   );
 };
 
@@ -215,6 +233,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 150,
     height: 150,
+    zIndex: 1,
   },
   canvasImage: {
     width: '100%',
