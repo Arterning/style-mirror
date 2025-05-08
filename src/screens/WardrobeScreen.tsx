@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, Button, FAB, Portal, Modal } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +14,11 @@ interface ClothingItem {
 const WardrobeScreen = () => {
   const [clothes, setClothes] = useState<ClothingItem[]>([]);
   const [visible, setVisible] = useState(false);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const categories = ['上衣', '裤子', '裙子', '鞋子', '包包', '配饰', '未分类'];
 
   // 添加 useEffect 钩子来加载保存的数据
   useEffect(() => {
@@ -100,24 +104,48 @@ const WardrobeScreen = () => {
     }
   };
 
+  const handleLongPress = (item: ClothingItem) => {
+    setSelectedItem(item);
+    setCategoryModalVisible(true);
+  };
+
+  const updateCategory = (newCategory: string) => {
+    if (selectedItem) {
+      const updatedClothes = clothes.map(item =>
+        item.id === selectedItem.id
+          ? { ...item, category: newCategory }
+          : item
+      );
+      setClothes(updatedClothes);
+      saveClothesToStorage(updatedClothes);
+      setCategoryModalVisible(false);
+      setSelectedItem(null);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.clothesList}>
         <View style={styles.grid}>
           {clothes.map((item) => (
-            <View key={item.id} style={styles.clothItem}>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.clothItem}
+              onLongPress={() => handleLongPress(item)}
+            >
               <Image
                 source={{ uri: item.imageUri }}
                 style={styles.clothImage}
                 resizeMode="cover"
               />
               <Text style={styles.category}>{item.category}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
 
       <Portal>
+        {/* 原有的添加衣物模态框 */}
         <Modal
           visible={visible}
           onDismiss={() => setVisible(false)}
@@ -130,6 +158,31 @@ const WardrobeScreen = () => {
             从相册选择
           </Button>
           <Button mode="outlined" onPress={() => setVisible(false)}>
+            取消
+          </Button>
+        </Modal>
+
+        {/* 新增的分类选择模态框 */}
+        <Modal
+          visible={categoryModalVisible}
+          onDismiss={() => setCategoryModalVisible(false)}
+          contentContainerStyle={styles.modal}
+        >
+          {categories.map((category) => (
+            <Button
+              key={category}
+              mode="outlined"
+              onPress={() => updateCategory(category)}
+              style={styles.modalButton}
+            >
+              {category}
+            </Button>
+          ))}
+          <Button
+            mode="contained"
+            onPress={() => setCategoryModalVisible(false)}
+            style={styles.modalButton}
+          >
             取消
           </Button>
         </Modal>
