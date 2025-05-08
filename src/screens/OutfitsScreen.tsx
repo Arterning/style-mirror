@@ -20,20 +20,54 @@ const DraggableItem: React.FC<{
   onPositionChange: (id: string, x: number, y: number) => void;
 }> = ({ item, index, onPositionChange }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const startPositionRef = useRef({ x: 0, y: 0 });
+  const itemPositionRef = useRef({ x: item.position?.x || 0, y: item.position?.y || 0 });
 
-  const handleMouseDown = (e: any) => {
+  const handleStart = (pageX: number, pageY: number) => {
     setIsDragging(true);
-    const startX = e.pageX - (item.position?.x || 0);
-    const startY = e.pageY - (item.position?.y || 0);
+    startPositionRef.current = {
+      x: pageX - (item.position?.x || 0),
+      y: pageY - (item.position?.y || 0)
+    };
+    itemPositionRef.current = {
+      x: item.position?.x || 0,
+      y: item.position?.y || 0
+    };
+  };
 
-    const handleMouseMove = (e: any) => {
-      const x = e.pageX - startX;
-      const y = e.pageY - startY;
+  const handleMove = (pageX: number, pageY: number) => {
+    if (isDragging) {
+      const x = pageX - startPositionRef.current.x;
+      const y = pageY - startPositionRef.current.y;
       onPositionChange(item.id, x, y);
+    }
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+  };
+
+  // 处理触摸事件
+  const handleTouchStart = (e: any) => {
+    const touch = e.nativeEvent.touches[0];
+    handleStart(touch.pageX, touch.pageY);
+  };
+
+  const handleTouchMove = (e: any) => {
+    const touch = e.nativeEvent.touches[0];
+    handleMove(touch.pageX, touch.pageY);
+  };
+
+  // 处理鼠标事件
+  const handleMouseDown = (e: any) => {
+    handleStart(e.pageX, e.pageY);
+    
+    const handleMouseMove = (e: any) => {
+      handleMove(e.pageX, e.pageY);
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
+      handleEnd();
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -49,11 +83,13 @@ const DraggableItem: React.FC<{
         {
           left: item.position?.x || 0,
           top: item.position?.y || 0,
-          cursor: isDragging ? 'grabbing' : 'grab',
+          zIndex: isDragging ? 999 : 1,
         },
       ]}
-      onTouchStart={handleMouseDown}
-      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleEnd}
+      onMouseDown={Platform.OS === 'web' ? handleMouseDown : undefined}
     >
       <Image
         source={{ uri: item.imageUri }}
@@ -164,12 +200,41 @@ const OutfitsScreen = () => {
     </View>
   );
 
+  const saveToJournal = async () => {
+    try {
+      const journalEntry = {
+        id: Date.now().toString(),
+        type: 'outfit',
+        items: selectedItems,
+        createdAt: new Date().toISOString(),
+        preview: null // 这里可以后续添加预览图功能
+      };
+
+      const savedJournal = await AsyncStorage.getItem('fashion_journal');
+      const journalEntries = savedJournal ? JSON.parse(savedJournal) : [];
+      journalEntries.push(journalEntry);
+      await AsyncStorage.setItem('fashion_journal', JSON.stringify(journalEntries));
+      alert('搭配已保存到穿搭日记');
+    } catch (error) {
+      console.error('保存到穿搭日记失败:', error);
+      alert('保存失败');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {renderCanvas()}
       <View style={styles.bottomPanel}>
         {renderCategories()}
         {renderClothingList()}
+        <Button 
+          mode="contained" 
+          onPress={saveToJournal}
+          style={styles.saveButton}
+          disabled={selectedItems.length === 0}
+        >
+          保存到穿搭日记
+        </Button>
       </View>
     </View>
   );
@@ -239,6 +304,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  saveButton: {
+    margin: 10,
+    backgroundColor: '#FF69B4'
+  }
 });
 
 export default OutfitsScreen;
