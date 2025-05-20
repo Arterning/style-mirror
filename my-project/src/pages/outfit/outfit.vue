@@ -7,9 +7,10 @@
                 <view v-for="(item, index) in selectedClothes" 
                       :key="index" 
                       class="draggable-clothes"
-                      :style="{ left: item.left + 'px', top: item.top + 'px' }"
-                      @touchmove="handleDrag($event, index)"
-                      @click="removeClothes(index)">
+                      :style="{ transform: `translate(${item.left}px, ${item.top}px)` }"
+                      @touchstart="handleTouchStart($event, index)"
+                      @touchmove.prevent="handleDrag($event, index)"
+                      @touchend="handleTouchEnd(index)">
                     <image :src="item.image" mode="aspectFit"></image>
                 </view>
             </view>
@@ -33,8 +34,15 @@
 export default {
     data() {
         return {
-            clothes: [], // 衣橱中的所有衣服
-            selectedClothes: [] // 被选中用于搭配的衣服
+            clothes: [],
+            selectedClothes: [],
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            initialLeft: 0,
+            initialTop: 0,
+            canvasWidth: 0,
+            canvasHeight: 0
         }
     },
     onLoad() {
@@ -43,34 +51,62 @@ export default {
         if (storedClothes) {
             this.clothes = JSON.parse(storedClothes);
         }
+        
+        // 获取展示区域的尺寸
+        const query = uni.createSelectorQuery();
+        query.select('.display-area').boundingClientRect(data => {
+            this.canvasWidth = data.width;
+            this.canvasHeight = data.height;
+        }).exec();
     },
     methods: {
         // 添加衣服到搭配区
         addToOutfit(item) {
+            // 使用已获取的画布尺寸计算中心位置
+            const centerX = (this.canvasWidth - 100) / 2;
+            const centerY = (this.canvasHeight - 100) / 2;
+            
             this.selectedClothes.push({
                 ...item,
-                left: 50, // 初始位置
-                top: 50
+                left: centerX || 50, // 如果尺寸未获取到，使用默认值
+                top: centerY || 50
             });
         },
-        // 处理拖拽
-        handleDrag(event, index) {
+        
+        handleTouchStart(event, index) {
             const touch = event.touches[0];
-            const clothes = this.selectedClothes[index];
+            this.isDragging = true;
+            this.startX = touch.clientX;
+            this.startY = touch.clientY;
+            this.initialLeft = this.selectedClothes[index].left;
+            this.initialTop = this.selectedClothes[index].top;
+        },
+
+        handleDrag(event, index) {
+            if (!this.isDragging) return;
+            
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - this.startX;
+            const deltaY = touch.clientY - this.startY;
+            
+            const newLeft = this.initialLeft + deltaX;
+            const newTop = this.initialTop + deltaY;
+            
+            // 使用已获取的画布尺寸限制范围
+            const maxX = this.canvasWidth - 100;
+            const maxY = this.canvasHeight - 100;
+            
+            // 限制拖动范围
+            const boundedLeft = Math.max(0, Math.min(newLeft, maxX));
+            const boundedTop = Math.max(0, Math.min(newTop, maxY));
             
             // 更新位置
-            clothes.left = touch.clientX - 50; // 50是衣服宽度的一半
-            clothes.top = touch.clientY - 50;
-            
-            // 确保不超出边界
-            clothes.left = Math.max(0, Math.min(clothes.left, 750 - 100)); // 750是屏幕宽度
-            clothes.top = Math.max(0, Math.min(clothes.top, this.displayHeight - 100));
-            
-            this.$set(this.selectedClothes, index, clothes);
+            this.$set(this.selectedClothes[index], 'left', boundedLeft);
+            this.$set(this.selectedClothes[index], 'top', boundedTop);
         },
-        // 移除已选择的衣服
-        removeClothes(index) {
-            this.selectedClothes.splice(index, 1);
+
+        handleTouchEnd(index) {
+            this.isDragging = false;
         }
     }
 }
@@ -81,6 +117,7 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    width: 100%;
 }
 
 .display-area {
@@ -101,6 +138,8 @@ export default {
     width: 100px;
     height: 100px;
     z-index: 1;
+    touch-action: none; /* 防止浏览器默认的触摸行为 */
+    will-change: transform; /* 优化性能 */
 }
 
 .draggable-clothes image {
