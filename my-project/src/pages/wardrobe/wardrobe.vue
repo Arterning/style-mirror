@@ -23,8 +23,11 @@
                 <view class="clothes-card" 
                       v-for="(item, index) in displayClothes" 
                       :key="index" 
-                      @longpress="deleteClothes(index)">
-                    <image :src="item.image" mode="aspectFill" class="clothes-image"></image>
+                      @click="previewImage(item.image)"
+                      @longpress="showActionSheet(index)">
+                    <view class="image-container">
+                        <image :src="item.image" mode="aspectFill" class="clothes-image"></image>
+                    </view>
                     <view class="clothes-info">
                         <text class="clothes-name">{{item.name}}</text>
                         <text class="clothes-category">{{getCategoryName(item.category)}}</text>
@@ -150,6 +153,61 @@ export default {
                     }
                 }
             });
+        },
+        
+        // 预览图片
+        previewImage(image) {
+            uni.previewImage({
+                urls: [image],
+                current: image
+            });
+        },
+        
+        // 显示操作菜单
+        showActionSheet(index) {
+            uni.showActionSheet({
+                itemList: ['修改', '删除'],
+                success: (res) => {
+                    if (res.tapIndex === 0) {
+                        this.editClothes(index);
+                    } else if (res.tapIndex === 1) {
+                        this.deleteClothes(index);
+                    }
+                }
+            });
+        },
+        
+        // 修改衣服信息
+        editClothes(index) {
+            const clothes = this.displayClothes[index];
+            uni.showModal({
+                title: '修改服装',
+                content: '',
+                editable: true,
+                placeholderText: '请输入新的服装名称',
+                success: (modalRes) => {
+                    if(modalRes.confirm && modalRes.content) {
+                        uni.showActionSheet({
+                            itemList: this.categories.slice(1).map(item => item.name),
+                            success: (actionRes) => {
+                                const category = this.categories[actionRes.tapIndex + 1];
+                                const clothesIndex = this.clothes.findIndex(item => 
+                                    item.image === clothes.image && item.name === clothes.name
+                                );
+                                if (clothesIndex !== -1) {
+                                    this.clothes[clothesIndex] = {
+                                        ...clothes,
+                                        name: modalRes.content,
+                                        category: category.id
+                                    };
+                                    this.saveClothesData();
+                                    this.switchCategory(this.currentCategory);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         }
     }
 }
@@ -210,13 +268,14 @@ export default {
 }
 
 .clothes-grid {
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 20rpx;
+    padding: 10rpx;
 }
 
 .clothes-card {
-    width: 345rpx;
+    width: calc(50% - 20rpx);
     margin: 10rpx;
     background-color: #fff;
     border-radius: 15rpx;
@@ -224,13 +283,25 @@ export default {
     box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
 }
 
+.image-container {
+    width: 100%;
+    padding-bottom: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
 .clothes-image {
-    width: 345rpx;
-    height: 345rpx;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .clothes-info {
     padding: 15rpx;
+    background-color: #fff;
 }
 
 .clothes-name {
@@ -238,6 +309,9 @@ export default {
     color: #333;
     margin-bottom: 8rpx;
     display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .clothes-category {
