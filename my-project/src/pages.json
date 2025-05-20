@@ -14,6 +14,13 @@
         }
     },
     {
+        "path": "pages/outfit/outfit",
+        "style": {
+            "navigationBarTitleText": "搭配",
+            "enablePullDownRefresh": true
+        }
+    },
+    {
         "path": "pages/detail/detail",
         "style": {
             "navigationBarTitleText": "详情",
@@ -86,10 +93,10 @@
             "text": "我的衣橱"
         },
         {
-            "pagePath": "pages/hot/hot",
+            "pagePath": "pages/outfit/outfit",
             "iconPath": "static/hot-0.png",
             "selectedIconPath": "static/hot-1.png",
-            "text": "推荐"
+            "text": "搭配"
         },
         {
             "pagePath": "pages/tag/tag",
