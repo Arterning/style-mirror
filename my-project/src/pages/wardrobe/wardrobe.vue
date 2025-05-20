@@ -275,6 +275,8 @@ export default {
 }
 
 .clothes-card {
+    display: flex;
+    flex-direction: column;
     width: calc(50% - 20rpx);
     margin: 10rpx;
     background-color: #fff;
@@ -300,6 +302,8 @@ export default {
 }
 
 .clothes-info {
+    display: flex;
+    justify-content: space-between;
     padding: 15rpx;
     background-color: #fff;
 }
