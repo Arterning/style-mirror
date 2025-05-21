@@ -49,11 +49,11 @@ export default {
     data() {
         return {
             categories: [
-                { name: '全部', id: 'all' },
-                { name: '上衣', id: 'tops' },
-                { name: '裤子', id: 'pants' },
-                { name: '裙子', id: 'dresses' },
-                { name: '鞋子', id: 'shoes' }
+                { name: '全部', id: 'all', preset: true },
+                { name: '上衣', id: 'tops', preset: true },
+                { name: '裤子', id: 'pants', preset: true },
+                { name: '裙子', id: 'dresses', preset: true },
+                { name: '鞋子', id: 'shoes', preset: true }
             ],
             currentCategory: 0,
             clothes: [],
@@ -63,8 +63,9 @@ export default {
         }
     },
     onLoad() {
-        // 从本地存储加载数据
+        // 从本地存储加载数据和分类
         this.loadClothesData();
+        this.loadCategories();
     },
     methods: {
         // 加载本地存储的衣服数据
@@ -108,11 +109,32 @@ export default {
             const category = this.categories.find(c => c.id === categoryId);
             return category ? category.name : '';
         },
+        // 加载分类数据
+        loadCategories() {
+            const storedCategories = uni.getStorageSync('wardrobeCategories');
+            if (storedCategories) {
+                const customCategories = JSON.parse(storedCategories);
+                // 合并预置分类和自定义分类
+                this.categories = [
+                    ...this.categories.filter(c => c.preset),
+                    ...customCategories
+                ];
+            }
+        },
+        
+        // 保存分类数据
+        saveCategories() {
+            // 只保存自定义分类
+            const customCategories = this.categories.filter(c => !c.preset);
+            uni.setStorageSync('wardrobeCategories', JSON.stringify(customCategories));
+        },
+        
         // 上传衣服
         uploadClothes() {
             uni.chooseImage({
                 count: 1,
                 success: (res) => {
+                    // 使用自定义弹窗收集信息
                     uni.showModal({
                         title: '添加服装',
                         content: '',
@@ -120,18 +142,57 @@ export default {
                         placeholderText: '请输入服装名称',
                         success: (modalRes) => {
                             if(modalRes.confirm && modalRes.content) {
-                                uni.showActionSheet({
-                                    itemList: this.categories.slice(1).map(item => item.name),
-                                    success: (actionRes) => {
-                                        const category = this.categories[actionRes.tapIndex + 1];
-                                        const newClothes = {
-                                            image: res.tempFilePaths[0],
-                                            name: modalRes.content,
-                                            category: category.id
-                                        };
-                                        this.clothes.push(newClothes);
-                                        this.saveClothesData(); // 保存到本地存储
-                                        this.switchCategory(this.currentCategory);
+                                // 弹出第二个输入框收集分类信息
+                                uni.showModal({
+                                    title: '选择或创建分类',
+                                    content: '',
+                                    editable: true,
+                                    placeholderText: '输入新分类名称或选择已有分类',
+                                    success: (categoryRes) => {
+                                        if(categoryRes.confirm) {
+                                            let categoryId;
+                                            let categoryName = categoryRes.content.trim();
+                                            
+                                            // 检查是否已存在该分类
+                                            const existingCategory = this.categories.find(
+                                                c => c.name === categoryName && !c.preset
+                                            );
+                                            
+                                            if (existingCategory) {
+                                                categoryId = existingCategory.id;
+                                            } else if (categoryName) {
+                                                // 创建新分类
+                                                categoryId = 'custom_' + Date.now();
+                                                const newCategory = {
+                                                    name: categoryName,
+                                                    id: categoryId,
+                                                    preset: false
+                                                };
+                                                this.categories.push(newCategory);
+                                                this.saveCategories();
+                                            } else {
+                                                // 如果用户没有输入分类名称，默认使用"其他"分类
+                                                categoryId = 'others';
+                                                if (!this.categories.find(c => c.id === 'others')) {
+                                                    this.categories.push({
+                                                        name: '其他',
+                                                        id: 'others',
+                                                        preset: false
+                                                    });
+                                                    this.saveCategories();
+                                                }
+                                            }
+                                            
+                                            // 添加新衣服
+                                            const newClothes = {
+                                                image: res.tempFilePaths[0],
+                                                name: modalRes.content,
+                                                category: categoryId
+                                            };
+                                            this.clothes.push(newClothes);
+                                            this.saveClothesData();
+                                            this.switchCategory(this.currentCategory);
+                                        }
                                     }
                                 });
                             }
