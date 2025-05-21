@@ -241,34 +241,24 @@ export default {
         // 修改衣服信息
         editClothes(index) {
             const clothes = this.displayClothes[index];
-            uni.showModal({
-                title: '修改服装',
-                content: '',
-                editable: true,
-                placeholderText: '请输入新的服装名称',
-                success: (modalRes) => {
-                    if(modalRes.confirm && modalRes.content) {
-                        uni.showActionSheet({
-                            itemList: this.categories.slice(1).map(item => item.name),
-                            success: (actionRes) => {
-                                const category = this.categories[actionRes.tapIndex + 1];
-                                const clothesIndex = this.clothes.findIndex(item => 
-                                    item.image === clothes.image && item.name === clothes.name
-                                );
-                                if (clothesIndex !== -1) {
-                                    this.clothes[clothesIndex] = {
-                                        ...clothes,
-                                        name: modalRes.content,
-                                        category: category.id
-                                    };
-                                    this.saveClothesData();
-                                    this.switchCategory(this.currentCategory);
-                                }
-                            }
-                        });
-                    }
-                }
+            // 跳转到编辑页面
+            uni.navigateTo({
+                url: `/pages/wardrobe/edit-clothes?clothes=${encodeURIComponent(JSON.stringify(clothes))}&index=${index}`
             });
+        },
+        
+        // 添加更新衣服方法
+        updateClothes(index, updatedClothes) {
+            const clothesIndex = this.clothes.findIndex(item => 
+                item.image === this.displayClothes[index].image && 
+                item.name === this.displayClothes[index].name
+            );
+            
+            if (clothesIndex !== -1) {
+                this.clothes[clothesIndex] = updatedClothes;
+                this.saveClothesData();
+                this.switchCategory(this.currentCategory);
+            }
         }
     }
 }
