@@ -20,6 +20,13 @@
         }
     },
     {
+        "path": "pages/outfit/index",
+        "style": {
+            "navigationBarTitleText": "我的搭配",
+            "enablePullDownRefresh": false
+        }
+    },
+    {
         "path": "pages/outfit/outfit",
         "style": {
             "navigationBarTitleText": "搭配",
@@ -96,10 +103,10 @@
             "pagePath": "pages/wardrobe/wardrobe",
             "iconPath": "static/index-0.png",
             "selectedIconPath": "static/index-1.png",
-            "text": "我的衣橱"
+            "text": "衣橱"
         },
         {
-            "pagePath": "pages/outfit/outfit",
+            "pagePath": "pages/outfit/index",
             "iconPath": "static/hot-0.png",
             "selectedIconPath": "static/hot-1.png",
             "text": "搭配"
