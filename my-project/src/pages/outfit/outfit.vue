@@ -41,6 +41,11 @@
                     </view>
                 </view>
             </view>
+            <!-- 添加操作按钮 -->
+            <view class="action-buttons">
+                <button class="action-btn clear-btn" @click="clearCanvas">清空画布</button>
+                <button class="action-btn save-btn" @click="showSaveModal">保存搭配</button>
+            </view>
         </view>
 
         <!-- 下方衣橱区域 - 修改为横向滚动 -->
@@ -74,7 +79,9 @@ export default {
             rotateStartAngle: 0,
             scaleStartDistance: 0,
             initialRotate: 0,
-            initialScale: 1
+            initialScale: 1,
+            showModal: false,
+            outfitName: ''
         }
     },
     onLoad() {
@@ -272,7 +279,64 @@ export default {
                     }
                 }
             });
-        }
+        },
+
+        // 清空画布
+        clearCanvas() {
+            this.selectedClothes = [];
+            this.selectedIndex = -1;
+        },
+
+
+        // 显示保存模态框
+        showSaveModal() {
+            uni.showModal({
+                title: '保存搭配',
+                editable: true,
+                placeholderText: '请输入搭配名称',
+                success: (res) => {
+                    if (res.confirm && res.content) {
+                        this.saveOutfit(res.content);
+                    }
+                }
+            });
+        },
+
+
+        // 保存搭配
+        saveOutfit(name) {
+            if (this.selectedClothes.length === 0) {
+                uni.showToast({
+                    title: '请先添加衣服到画布',
+                    icon: 'none'
+                });
+                return;
+            }
+            
+            const outfit = {
+                name: name,
+                clothes: this.selectedClothes,
+                createTime: new Date().getTime()
+            };
+            
+            // 从本地存储获取现有搭配
+            let outfits = uni.getStorageSync('savedOutfits') || [];
+            if (typeof outfits === 'string') {
+                outfits = JSON.parse(outfits);
+            }
+            
+            // 添加新搭配
+            outfits.push(outfit);
+            
+            // 保存到本地存储
+            uni.setStorageSync('savedOutfits', JSON.stringify(outfits));
+            
+            uni.showToast({
+                title: '保存成功',
+                icon: 'success'
+            });
+        },
+
     }
 }
 </script>
@@ -412,5 +476,31 @@ export default {
 .delete-icon {
     font-size: 32rpx;
     line-height: 1;
+}
+
+.action-buttons {
+    position: absolute;
+    bottom: 20rpx;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20rpx;
+    padding: 0 30rpx;
+}
+
+.action-btn {
+    padding: 15rpx 30rpx;
+    border-radius: 30rpx;
+    font-size: 28rpx;
+    color: #fff;
+}
+
+.clear-btn {
+    background-color: #ff4081;
+}
+
+.save-btn {
+    background-color: #FF80AB;
 }
 </style>
