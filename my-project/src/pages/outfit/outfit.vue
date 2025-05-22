@@ -86,6 +86,13 @@ export default {
             this.canvasHeight = data.height;
         }).exec();
     },
+    onShow() {
+        // 每次页面显示时重新加载衣服数据
+        const storedClothes = uni.getStorageSync('wardrobeClothes');
+        if (storedClothes) {
+            this.clothes = JSON.parse(storedClothes);
+        }
+    },
     methods: {
         // 添加衣服到搭配区
         addToOutfit(item) {
