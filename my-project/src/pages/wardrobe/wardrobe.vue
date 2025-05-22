@@ -38,7 +38,7 @@
 
         <!-- 添加按钮 -->
         <view class="add-btn" @click="uploadClothes">
-            <text class="iconfont">&#xe61a;</text>
+            <text class="iconfont">+</text>
             <text>添加服装</text>
         </view>
     </view>
