@@ -289,7 +289,7 @@ export default {
 }
 
 .display-area {
-    flex: 3;
+    flex: 9;
     background-color: #f8f8f8;
     position: relative;
     overflow: hidden;
@@ -302,7 +302,7 @@ export default {
 }
 
 .wardrobe-area {
-    flex: 2;
+    flex: 1;
     height: 180rpx;  /* 固定高度 */
     background-color: #fff;
     padding: 20rpx;
