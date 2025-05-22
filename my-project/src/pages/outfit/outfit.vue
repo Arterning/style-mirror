@@ -19,6 +19,11 @@
                     
                     <!-- 选中时显示的控制框 -->
                     <view v-if="selectedIndex === index" class="control-box">
+                        <!-- 删除按钮 -->
+                        <view class="delete-handle"
+                              @tap.stop="deleteClothes(index)">
+                            <text class="delete-icon">×</text>
+                        </view>
                         <!-- 旋转控制点 -->
                         <view class="rotate-handle"
                               @touchstart.stop="handleRotateStart($event)"
@@ -38,9 +43,9 @@
             </view>
         </view>
 
-        <!-- 下方衣橱区域 -->
-        <scroll-view scroll-y="true" class="wardrobe-area">
-            <view class="clothes-grid">
+        <!-- 下方衣橱区域 - 修改为横向滚动 -->
+        <scroll-view scroll-x="true" class="wardrobe-area">
+            <view class="clothes-row">
                 <view class="clothes-item" 
                       v-for="(item, index) in clothes" 
                       :key="index"
@@ -253,6 +258,20 @@ export default {
                 left: centerX || 50, // 如果尺寸未获取到，使用默认值
                 top: centerY || 50
             });
+        },
+        
+        // 添加删除方法
+        deleteClothes(index) {
+            uni.showModal({
+                title: '确认删除',
+                content: '确定要删除这件衣服吗？',
+                success: (res) => {
+                    if (res.confirm) {
+                        this.selectedClothes.splice(index, 1);
+                        this.selectedIndex = -1;
+                    }
+                }
+            });
         }
     }
 }
@@ -264,6 +283,9 @@ export default {
     flex-direction: column;
     height: 100vh;
     width: 100%;
+    position: fixed;  /* 添加固定定位，防止下拉刷新 */
+    top: 0;
+    left: 0;
 }
 
 .display-area {
@@ -281,22 +303,26 @@ export default {
 
 .wardrobe-area {
     flex: 2;
+    height: 180rpx;  /* 固定高度 */
     background-color: #fff;
     padding: 20rpx;
+    white-space: nowrap;  /* 防止换行 */
 }
 
-.clothes-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20rpx;
+.clothes-row {
+    display: inline-flex;  /* 改为内联弹性布局 */
     padding: 10rpx;
+    height: 100%;
 }
 
 .clothes-item {
-    aspect-ratio: 1;
+    width: 120rpx;  /* 固定宽度 */
+    height: 120rpx;  /* 固定高度 */
+    margin-right: 20rpx;  /* 右侧间距 */
     border-radius: 10rpx;
     overflow: hidden;
     box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;  /* 防止压缩 */
 }
 
 .clothes-item image {
@@ -365,5 +391,26 @@ export default {
 
 .rotate-icon, .scale-icon {
     font-size: 24rpx;
+}
+
+.delete-handle {
+    position: absolute;
+    right: -30rpx;
+    top: -30rpx;
+    width: 40rpx;
+    height: 40rpx;
+    background: #ff4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    color: #fff;
+    font-size: 32rpx;
+}
+
+.delete-icon {
+    font-size: 32rpx;
+    line-height: 1;
 }
 </style>
