@@ -313,29 +313,89 @@ export default {
                 return;
             }
             
-            const outfit = {
-                name: name,
-                clothes: this.selectedClothes,
-                createTime: new Date().getTime()
-            };
-            
-            // 从本地存储获取现有搭配
-            let outfits = uni.getStorageSync('savedOutfits') || [];
-            if (typeof outfits === 'string') {
-                outfits = JSON.parse(outfits);
-            }
-            
-            // 添加新搭配
-            outfits.push(outfit);
-            
-            // 保存到本地存储
-            uni.setStorageSync('savedOutfits', JSON.stringify(outfits));
-            
-            uni.showToast({
-                title: '保存成功',
-                icon: 'success'
+            // 获取画布元素
+            const query = uni.createSelectorQuery();
+            query.select('.outfit-canvas').fields({
+                node: true,
+                size: true
+            }).exec((res) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const width = res[0].width;
+                const height = res[0].height;
+                
+                // 设置画布尺寸
+                canvas.width = width;
+                canvas.height = height;
+                
+                // 设置背景色
+                ctx.fillStyle = '#f8f8f8';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 绘制所有衣服
+                const drawPromises = this.selectedClothes.map(item => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.save();
+                            // 设置变换中心点
+                            const centerX = item.left + 50;
+                            const centerY = item.top + 50;
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate((item.rotate || 0) * Math.PI / 180);
+                            ctx.scale(item.scale || 1, item.scale || 1);
+                            ctx.drawImage(img, -50, -50, 100, 100);
+                            ctx.restore();
+                            resolve();
+                        };
+                        img.src = item.image;
+                    });
+                });
+                
+                // 等待所有图片绘制完成
+                Promise.all(drawPromises).then(() => {
+                    // 将画布转换为图片
+                    const previewImage = canvas.toDataURL('image/png');
+                    
+                    // 构建搭配数据
+                    const outfit = {
+                        name: name,
+                        previewImage: previewImage,
+                        clothes: this.selectedClothes.map(item => ({
+                            image: item.image,
+                            left: item.left,
+                            top: item.top,
+                            rotate: item.rotate || 0,
+                            scale: item.scale || 1
+                        })),
+                        createTime: new Date().getTime()
+                    };
+                    
+                    // 从本地存储获取现有搭配
+                    let outfits = uni.getStorageSync('savedOutfits') || [];
+                    if (typeof outfits === 'string') {
+                        outfits = JSON.parse(outfits);
+                    }
+                    
+                    // 添加新搭配
+                    outfits.push(outfit);
+                    
+                    // 保存到本地存储
+                    uni.setStorageSync('savedOutfits', JSON.stringify(outfits));
+                    
+                    uni.showToast({
+                        title: '保存成功',
+                        icon: 'success',
+                        success: () => {
+                            // 保存成功后返回上一页
+                            setTimeout(() => {
+                                uni.navigateBack();
+                            }, 1500);
+                        }
+                    });
+                });
             });
-        },
+        }
 
     }
 }
