@@ -372,31 +372,41 @@ export default {
                     // 等待所有图片绘制完成
                     Promise.all(drawPromises).then(() => {
                         // 将canvas转换为图片
-                        uni.canvasToTempFilePath({
-                            canvas: canvas,
-                            success: (res) => {
-                                // 构建搭配数据
-                                const outfit = {
-                                    name: name,
-                                    previewImage: res.tempFilePath,
-                                    clothes: this.selectedClothes.map(item => ({
-                                        image: item.image,
-                                        left: item.left,
-                                        top: item.top,
-                                        rotate: item.rotate || 0,
-                                        scale: item.scale || 1
-                                    })),
-                                    createTime: new Date().getTime()
-                                };
-                                
-                                // 从本地存储获取现有搭配
-                                let outfits = uni.getStorageSync('savedOutfits') || [];
-                                if (typeof outfits === 'string') {
-                                    outfits = JSON.parse(outfits);
+                    uni.canvasToTempFilePath({
+                        canvas: canvas,
+                        success: (res) => {
+                            // 构建搭配数据
+                            const outfit = {
+                                name: name,
+                                previewImage: res.tempFilePath,
+                                clothes: this.selectedClothes.map(item => ({
+                                    image: item.image,
+                                    left: item.left,
+                                    top: item.top,
+                                    rotate: item.rotate || 0,
+                                    scale: item.scale || 1
+                                })),
+                                createTime: new Date().getTime()
+                            };
+                            
+                            // 从本地存储获取现有搭配
+                            let outfits = uni.getStorageSync('savedOutfits') || [];
+                            if (typeof outfits === 'string') {
+                                outfits = JSON.parse(outfits);
+                            }
+                            
+                            // 如果是编辑模式，更新现有搭配
+                            if (this.outfitName) {  // 使用outfitName判断是否为编辑模式
+                                const index = outfits.findIndex(o => o.name === this.outfitName);
+                                if (index !== -1) {
+                                    outfits[index] = outfit;
+                                } else {
+                                    outfits.push(outfit);
                                 }
-                                
+                            } else {
                                 // 添加新搭配
                                 outfits.push(outfit);
+                            }
                                 
                                 // 保存到本地存储
                                 uni.setStorageSync('savedOutfits', JSON.stringify(outfits));
@@ -405,12 +415,14 @@ export default {
                                     title: '保存成功',
                                     icon: 'success',
                                     success: () => {
-                                        // 保存成功后返回上一页
-                                        setTimeout(() => {
-                                            uni.navigateBack();
-                                        }, 1500);
+                                        // 修改为跳转到 outfit/index
+                                        uni.navigateTo({
+                                            url: '/pages/outfit/index'
+                                        });
                                     }
                                 });
+
+                                
                             },
                             fail: (err) => {
                                 console.error('Canvas转图片失败:', err);

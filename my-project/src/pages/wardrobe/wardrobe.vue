@@ -7,15 +7,17 @@
         </view>
         
         <!-- 分类栏 -->
-        <view class="category-bar">
-            <view class="category-item" 
-                  v-for="(category, index) in categories" 
-                  :key="index" 
-                  @click="switchCategory(index)" 
-                  :class="{'active': currentCategory === index}">
-                {{category.name}}
+        <scroll-view scroll-x="true" class="category-bar" show-scrollbar="false">
+            <view class="category-scroll">
+                <view class="category-item" 
+                      v-for="(category, index) in categories" 
+                      :key="index" 
+                      @click="switchCategory(index)" 
+                      :class="{'active': currentCategory === index}">
+                    {{category.name}}
+                </view>
             </view>
-        </view>
+        </scroll-view>
         
         <!-- 衣服网格 -->
         <scroll-view scroll-y="true" class="clothes-container">
@@ -142,58 +144,30 @@ export default {
                         placeholderText: '请输入服装名称',
                         success: (modalRes) => {
                             if(modalRes.confirm && modalRes.content) {
-                                // 弹出第二个输入框收集分类信息
-                                uni.showModal({
-                                    title: '选择或创建分类',
-                                    content: '',
-                                    editable: true,
-                                    placeholderText: '输入新分类名称或选择已有分类',
-                                    success: (categoryRes) => {
-                                        if(categoryRes.confirm) {
-                                            let categoryId;
-                                            let categoryName = categoryRes.content.trim();
-                                            
-                                            // 检查是否已存在该分类
-                                            const existingCategory = this.categories.find(
-                                                c => c.name === categoryName && !c.preset
-                                            );
-                                            
-                                            if (existingCategory) {
-                                                categoryId = existingCategory.id;
-                                            } else if (categoryName) {
-                                                // 创建新分类
-                                                categoryId = 'custom_' + Date.now();
-                                                const newCategory = {
-                                                    name: categoryName,
-                                                    id: categoryId,
-                                                    preset: false
-                                                };
-                                                this.categories.push(newCategory);
-                                                this.saveCategories();
-                                            } else {
-                                                // 如果用户没有输入分类名称，默认使用"其他"分类
-                                                categoryId = 'others';
-                                                if (!this.categories.find(c => c.id === 'others')) {
-                                                    this.categories.push({
-                                                        name: '其他',
-                                                        id: 'others',
-                                                        preset: false
-                                                    });
-                                                    this.saveCategories();
-                                                }
-                                            }
-                                            
-                                            // 添加新衣服
-                                            const newClothes = {
-                                                image: res.tempFilePaths[0],
-                                                name: modalRes.content,
-                                                category: categoryId
-                                            };
-                                            this.clothes.push(newClothes);
-                                            this.saveClothesData();
-                                            this.switchCategory(this.currentCategory);
-                                        }
-                                    }
+                                // 添加新衣服，默认分类为"其他"
+                                const newClothes = {
+                                    image: res.tempFilePaths[0],
+                                    name: modalRes.content,
+                                    category: 'others'
+                                };
+                                
+                                // 确保"其他"分类存在
+                                if (!this.categories.find(c => c.id === 'others')) {
+                                    this.categories.push({
+                                        name: '其他',
+                                        id: 'others',
+                                        preset: false
+                                    });
+                                    this.saveCategories();
+                                }
+                                
+                                this.clothes.push(newClothes);
+                                this.saveClothesData();
+                                this.switchCategory(this.currentCategory);
+                                
+                                uni.showToast({
+                                    title: '添加成功',
+                                    icon: 'success'
                                 });
                             }
                         }
@@ -294,11 +268,15 @@ export default {
 }
 
 .category-bar {
-    flex-direction: row;
     background-color: #fff;
-    padding: 20rpx;
-    justify-content: space-around;
+    padding: 20rpx 0;
+    white-space: nowrap;
     border-bottom: 1rpx solid #eee;
+}
+
+.category-scroll {
+    display: inline-flex;
+    padding: 0 20rpx;
 }
 
 .category-item {
@@ -306,6 +284,8 @@ export default {
     font-size: 28rpx;
     color: #666;
     border-radius: 20rpx;
+    margin-right: 20rpx;
+    flex-shrink: 0;
 }
 
 .category-item.active {
