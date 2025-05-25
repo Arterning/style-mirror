@@ -8,24 +8,22 @@
         
         <!-- 搭配网格 -->
         <scroll-view scroll-y="true" class="outfit-container">
-            <view  class="outfit-grid">
-                <view class="outfit-card" v-for="(outfit, index) in displayOutfits" :key="index" @click="previewOutfit(outfit)">
-                    <!-- 搭配预览区域 -->
-                    <view class="preview-area">
-                        <view class="clothes-preview" v-for="(item, clothesIndex) in outfit.clothes" 
-                              :key="clothesIndex"
-                              :style="{
-                                  transform: `translate(${item.left}px, ${item.top}px) rotate(${item.rotate || 0}deg) scale(${item.scale || 1})`,
-                                  zIndex: clothesIndex
-                              }">
-                            <image :src="item.image" mode="aspectFit"></image>
-                        </view>
+            <view class="outfit-grid">
+                <view class="outfit-card" v-for="(outfit, index) in displayOutfits" :key="index">
+                    <view class="image-container">
+                        <image :src="outfit.previewImage" mode="aspectFill" class="clothes-image"></image>
                     </view>
                     
-                    <!-- 搭配信息 -->
+                    <!-- 搭配信息和操作按钮 -->
                     <view class="outfit-info">
-                        <text class="outfit-name">{{outfit.name}}</text>
-                        <text class="outfit-date">{{formatDate(outfit.createTime)}}</text>
+                        <view>
+                            <text class="outfit-name">{{outfit.name}}</text>
+                            <text class="outfit-date">{{formatDate(outfit.createTime)}}</text>
+                        </view>
+                        <view class="outfit-actions">
+                            <text class="action-btn edit-btn" @click.stop="editOutfit(outfit)">编辑</text>
+                            <text class="action-btn delete-btn" @click.stop="deleteOutfit(index)">删除</text>
+                        </view>
                     </view>
                 </view>
             </view>
@@ -137,6 +135,32 @@ export default {
                 outfit.name.toLowerCase().includes(this.searchText.toLowerCase())
             );
         },
+        
+        // 编辑搭配
+        editOutfit(outfit) {
+            uni.navigateTo({
+                url: `/pages/outfit/outfit?outfit=${encodeURIComponent(JSON.stringify(outfit))}`
+            });
+        },
+        
+        // 删除搭配
+        deleteOutfit(index) {
+            uni.showModal({
+                title: '确认删除',
+                content: '确定要删除这个搭配吗？',
+                success: (res) => {
+                    if (res.confirm) {
+                        this.outfits.splice(index, 1);
+                        uni.setStorageSync('savedOutfits', JSON.stringify(this.outfits));
+                        this.displayOutfits = this.outfits;
+                        uni.showToast({
+                            title: '删除成功',
+                            icon: 'success'
+                        });
+                    }
+                }
+            });
+        }
     }
 }
 </script>
@@ -244,5 +268,42 @@ export default {
 .create-icon {
     font-size: 40rpx;
     margin-bottom: 5rpx;
+}
+
+.outfit-actions {
+    display: flex;
+    gap: 20rpx;
+}
+
+.action-btn {
+    font-size: 24rpx;
+    padding: 6rpx 16rpx;
+    border-radius: 20rpx;
+    color: #fff;
+}
+
+.edit-btn {
+    background-color: #FF80AB;
+}
+
+.delete-btn {
+    background-color: #ff4444;
+}
+
+
+.image-container {
+    width: 100%;
+    padding-bottom: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.clothes-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 </style>

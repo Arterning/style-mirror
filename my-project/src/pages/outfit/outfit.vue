@@ -94,7 +94,7 @@ export default {
             outfitName: ''
         }
     },
-    onLoad() {
+    onLoad(options) {
         // 从本地存储加载衣服数据
         const storedClothes = uni.getStorageSync('wardrobeClothes');
         if (storedClothes) {
@@ -106,6 +106,13 @@ export default {
         query.select('.display-area').boundingClientRect(data => {
             this.canvasWidth = data.width;
             this.canvasHeight = data.height;
+            
+            // 如果有传入的搭配数据，加载它
+            if (options.outfit) {
+                const outfit = JSON.parse(decodeURIComponent(options.outfit));
+                this.selectedClothes = outfit.clothes;
+                this.outfitName = outfit.name;
+            }
         }).exec();
     },
     onShow() {
