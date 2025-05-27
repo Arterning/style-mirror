@@ -4,20 +4,19 @@
         <view class="upload-section">
             <!-- 自拍上传 -->
             <view class="upload-area">
-                <view class="upload-title">上传自拍照片</view>
                 <view class="upload-box" @click="uploadSelfie" v-if="!selfieImage">
                     <text class="iconfont">+</text>
-                    <text>点击上传</text>
+                    <text>点击上传自拍照片</text>
                 </view>
                 <image v-else :src="selfieImage" mode="aspectFit" class="preview-image" @click="uploadSelfie"></image>
             </view>
             
             <!-- 衣服上传 -->
             <view class="upload-area">
-                <view class="upload-title">上传衣服照片</view>
+                <!-- <view class="upload-title">上传衣服照片</view> -->
                 <view class="upload-box" @click="uploadClothes" v-if="!clothesImage">
                     <text class="iconfont">+</text>
-                    <text>点击上传</text>
+                    <text>点击上传衣服照片</text>
                 </view>
                 <image v-else :src="clothesImage" mode="aspectFit" class="preview-image" @click="uploadClothes"></image>
             </view>
@@ -123,6 +122,9 @@ export default {
 <style>
 .change-clothes {
     padding: 30rpx;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .upload-section {
@@ -178,6 +180,8 @@ export default {
     color: #fff;
     border-radius: 40rpx;
     margin: 40rpx auto;
+    position: relative;
+    z-index: 1;
 }
 
 .generate-btn[disabled] {
