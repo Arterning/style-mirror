@@ -34,6 +34,13 @@
         }
     },
     {
+        "path": "pages/ai/change-clothes",
+        "style": {
+            "navigationBarTitleText": "AI换装",
+            "enablePullDownRefresh": false
+        }
+    },
+    {
         "path": "pages/detail/detail",
         "style": {
             "navigationBarTitleText": "详情",
@@ -112,10 +119,10 @@
             "text": "搭配"
         },
         {
-            "pagePath": "pages/tag/tag",
+            "pagePath": "pages/ai/change-clothes",
             "iconPath": "static/tag-0.png",
             "selectedIconPath": "static/tag-1.png",
-            "text": "分类"
+            "text": "AI换装"
         },
         {
             "pagePath": "pages/center/center",
