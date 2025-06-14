@@ -45,7 +45,9 @@
             </view>
             
             <!-- 保存按钮 -->
-            <button class="save-btn" form-type="submit">保存</button>
+             <view class="form-group">
+                <button class="save-btn" form-type="submit">保存</button>
+             </view>
         </form>
     </view>
 </template>
@@ -190,6 +192,7 @@ export default {
     background-color: #FF80AB;
     color: #fff;
     margin-top: 40rpx;
+    width: 160rpx;
     height: 88rpx;
     line-height: 88rpx;
     border-radius: 44rpx;

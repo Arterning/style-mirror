@@ -7,7 +7,7 @@
 				<text class="go-login navigat-arrow" v-if="!login">&#xe65e;</text>
 			</view>
 		</view>
-		<view class="center-list">
+		<!-- <view class="center-list">
 			<view class="center-list-item border-bottom">
 				<text class="list-icon">&#xe60c;</text>
 				<text class="list-text">收藏图片</text>
@@ -18,8 +18,8 @@
 				<text class="list-text">收藏图集</text>
 				<text class="navigat-arrow">&#xe65e;</text>
 			</view>
-		</view>
-		<view class="center-list">
+		</view> -->
+		<!-- <view class="center-list">
 			<view class="center-list-item border-bottom">
 				<text class="list-icon">&#xe60b;</text>
 				<text class="list-text">管理图片</text>
@@ -30,8 +30,8 @@
 				<text class="list-text">上传图片</text>
 				<text class="navigat-arrow">&#xe65e;</text>
 			</view>
-		</view>
-		<view class="center-list">
+		</view> -->
+		<!-- <view class="center-list">
 			<view class="center-list-item border-bottom" @click="goAbout">
 				<text class="list-icon">&#xe603;</text>
 				<text class="list-text">关于</text>
@@ -42,7 +42,7 @@
 				<text class="list-text">账号管理</text>
 				<text class="navigat-arrow">&#xe65e;</text>
 			</view>
-		</view>
+		</view> -->
 	</view>
 </template>
 
