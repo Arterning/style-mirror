@@ -27,11 +27,23 @@
                 <text class="form-label">价格</text>
                 <input type="digit" v-model="clothesInfo.price" placeholder="请输入价格"/>
             </view>
-            
+
+            <!-- 穿着次数 -->
             <view class="form-group">
+                <text class="form-label">穿着次数</text>
+                <input type="digit" v-model="clothesInfo.times" placeholder="请输入穿着次数"/>
+            </view>
+
+            <!-- 每次费用 显示：价格/穿着次数 只是显示，不能编辑 -->
+            <view class="form-group">
+                <text class="form-label">每次费用</text>
+                <input type="text" :value="clothesInfo.price && clothesInfo.times ? (clothesInfo.price / clothesInfo.times).toFixed(2) : ''" readonly/>
+            </view>
+            
+            <!-- <view class="form-group">
                 <text class="form-label">购买链接</text>
                 <input type="text" v-model="clothesInfo.purchaseLink" placeholder="请输入购买链接"/>
-            </view>
+            </view> -->
             
             <view class="form-group">
                 <text class="form-label">洗涤方式</text>
@@ -64,6 +76,7 @@ export default {
                 image: '',
                 purchaseDate: '',
                 price: '',
+                times: '',
                 purchaseLink: '',
                 washingMethod: '',
                 status: '已购买'
