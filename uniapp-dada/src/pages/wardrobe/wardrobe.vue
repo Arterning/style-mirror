@@ -130,12 +130,36 @@ export default {
             const customCategories = this.categories.filter(c => !c.preset);
             uni.setStorageSync('wardrobeCategories', JSON.stringify(customCategories));
         },
+
+        // 将临时文件保存为永久文件
+        saveFilePermanently(tempFilePath) {
+            return new Promise((resolve, reject) => {
+                const fs = wx.getFileSystemManager();
+                const fileName = `clothes_${Date.now()}_${Math.random().toString(36).substr(2, 6)}.jpg`;
+                const savedPath = `${wx.env.USER_DATA_PATH}/${fileName}`;
+                
+                fs.copyFile({
+                    srcPath: tempFilePath,
+                    destPath: savedPath,
+                    success: () => resolve(savedPath),
+                    fail: (err) => reject(err)
+                });
+            });
+        },
         
         // 上传衣服
         uploadClothes() {
             uni.chooseImage({
                 count: 1,
-                success: (res) => {
+                success: async (res) => {
+                    const tempFilePath = res.tempFilePaths[0];
+
+                    // 显示加载中提示
+                    uni.showLoading({ title: '保存中...', mask: true });
+
+                    // 生成永久路径并保存文件
+                    const savedPath = await this.saveFilePermanently(tempFilePath);
+
                     // 使用自定义弹窗收集信息
                     uni.showModal({
                         title: '添加服装',
@@ -146,7 +170,7 @@ export default {
                             if(modalRes.confirm && modalRes.content) {
                                 // 添加新衣服，默认分类为"其他"
                                 const newClothes = {
-                                    image: res.tempFilePaths[0],
+                                    image: savedPath,
                                     name: modalRes.content,
                                     category: 'others'
                                 };
