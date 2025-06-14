@@ -64,10 +64,12 @@ export default {
             displayClothes: []
         }
     },
+    onShow() {
+        this.loadClothesData();
+    },
     onLoad() {
         // 从本地存储加载数据和分类
         this.loadClothesData();
-        // this.loadCategories();
     },
     methods: {
         // 加载本地存储的衣服数据
@@ -78,10 +80,17 @@ export default {
                 this.currentClothes = this.clothes;
                 this.displayClothes = this.clothes;
 
-                const customCategories = this.clothes.map(item => item.categoryName); 
+                const presetCategoryNames = this.categories.filter(c => c.preset).map(c => c.name);
+
+                const customCategories = this.clothes
+                   .map(item => item.categoryName)
+                   .filter(name => !presetCategoryNames.includes(name))
+                   .filter((name, index, self) => self.indexOf(name) === index); // 去重
+
                 this.categories = [
                     ...this.categories.filter(c => c.preset),
-                    ...customCategories.map(name => ({ name, id: name.toLowerCase(), preset: false }))
+                    ...customCategories
+                        .map(name => ({ name, id: name.toLowerCase(), preset: false }))
                 ] 
             }
         },
@@ -97,7 +106,7 @@ export default {
                 this.currentClothes = this.clothes;
             } else {
                 this.currentClothes = this.clothes.filter(item => 
-                    item.categoryName === this.categories[index].id
+                    item.categoryName === this.categories[index].name
                 );
             }
             this.displayClothes = this.currentClothes;
@@ -117,25 +126,7 @@ export default {
             const category = this.categories.find(c => c.id === categoryId);
             return category ? category.name : '';
         },
-        // 加载分类数据
-        // loadCategories() {
-        //     const storedCategories = uni.getStorageSync('wardrobeCategories');
-        //     if (storedCategories) {
-        //         const customCategories = JSON.parse(storedCategories);
-        //         // 合并预置分类和自定义分类
-        //         this.categories = [
-        //             ...this.categories.filter(c => c.preset),
-        //             ...customCategories
-        //         ];
-        //     }
-        // },
         
-        // 保存分类数据
-        saveCategories() {
-            // 只保存自定义分类
-            const customCategories = this.categories.filter(c => !c.preset);
-            uni.setStorageSync('wardrobeCategories', JSON.stringify(customCategories));
-        },
 
         // 将临时文件保存为永久文件
         saveFilePermanently(tempFilePath) {
@@ -161,7 +152,7 @@ export default {
                     const tempFilePath = res.tempFilePaths[0];
 
                     // 显示加载中提示
-                    uni.showLoading({ title: '保存中...', mask: true });
+                    // uni.showLoading({ title: '保存中...', mask: true });
 
                     // 生成永久路径并保存文件
                     const savedPath = await this.saveFilePermanently(tempFilePath);
@@ -188,13 +179,12 @@ export default {
                                         id: 'others',
                                         preset: false
                                     });
-                                    // this.saveCategories();
                                 }
                                 
                                 this.clothes.push(newClothes);
                                 this.saveClothesData();
                                 this.switchCategory(this.currentCategory);
-                                
+                                this.loadClothesData();
                                 uni.showToast({
                                     title: '添加成功',
                                     icon: 'success'
