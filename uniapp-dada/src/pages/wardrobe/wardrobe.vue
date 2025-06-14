@@ -25,12 +25,11 @@
                 <view class="clothes-card" 
                       v-for="(item, index) in displayClothes" 
                       :key="index" 
-                      @click="previewImage(item.image)"
                       @longpress="showActionSheet(index)">
                     <view class="image-container">
-                        <image :src="item.image" mode="aspectFill" class="clothes-image"></image>
+                        <image :src="item.image" @click="previewImage(item.image)" mode="aspectFill" class="clothes-image"></image>
                     </view>
-                    <view class="clothes-info">
+                    <view class="clothes-info" @click="showClothesDetails(item)">
                         <text class="clothes-name">{{item.name}}</text>
                         <text class="clothes-category">{{item.categoryName}}</text>
                     </view>
@@ -253,8 +252,28 @@ export default {
                 this.saveClothesData();
                 this.switchCategory(this.currentCategory);
             }
-        }
-    }
+        },
+
+        showClothesDetails(item) {
+            uni.showModal({
+                title: '服装信息',
+                content: `价格：${item.price || '未设置'} \n
+                            颜色：${item.color || '未设置'} \n
+                            尺码：${item.size || '未设置'} \n
+                            名称：${item.name || '未设置'} \n
+                            分类：${item.categoryName || '未设置'}
+                            购买日期：${item.purchaseDate || '未设置'} \n
+                            购买链接：${item.purchaseLink || '未设置'} \n`,
+                showCancel: false,
+                success: (res) => {
+                    if (res.confirm) {
+                        console.log('用户点击确定');
+                    }
+                }
+            });
+        },
+    },
+
 }
 </script>
 
