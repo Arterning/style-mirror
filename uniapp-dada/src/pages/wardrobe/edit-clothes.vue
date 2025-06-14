@@ -9,9 +9,10 @@
             
             <view class="form-group">
                 <text class="form-label">分类</text>
-                <picker :range="categoryOptions" :value="categoryIndex" @change="onCategoryChange">
-                    <view class="picker-value">{{clothesInfo.categoryName || '请选择分类'}}</view>
-                </picker>
+                <input type="text" v-model="clothesInfo.categoryName" placeholder="请选择分类"/>
+                <!-- <picker :range="categoryOptions" :value="categoryIndex" @change="onCategoryChange">
+                    <view class="picker-value">{{clothesInfo.categoryName    || '请选择分类'}}</view>
+                </picker> -->
             </view>
             
             <!-- 扩展信息 -->

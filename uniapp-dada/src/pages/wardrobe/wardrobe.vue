@@ -32,7 +32,7 @@
                     </view>
                     <view class="clothes-info">
                         <text class="clothes-name">{{item.name}}</text>
-                        <text class="clothes-category">{{getCategoryName(item.category)}}</text>
+                        <text class="clothes-category">{{item.categoryName}}</text>
                     </view>
                 </view>
             </view>
@@ -67,7 +67,7 @@ export default {
     onLoad() {
         // 从本地存储加载数据和分类
         this.loadClothesData();
-        this.loadCategories();
+        // this.loadCategories();
     },
     methods: {
         // 加载本地存储的衣服数据
@@ -77,6 +77,12 @@ export default {
                 this.clothes = JSON.parse(storedClothes);
                 this.currentClothes = this.clothes;
                 this.displayClothes = this.clothes;
+
+                const customCategories = this.clothes.map(item => item.categoryName); 
+                this.categories = [
+                    ...this.categories.filter(c => c.preset),
+                    ...customCategories.map(name => ({ name, id: name.toLowerCase(), preset: false }))
+                ] 
             }
         },
         // 保存数据到本地存储
@@ -91,7 +97,7 @@ export default {
                 this.currentClothes = this.clothes;
             } else {
                 this.currentClothes = this.clothes.filter(item => 
-                    item.category === this.categories[index].id
+                    item.categoryName === this.categories[index].id
                 );
             }
             this.displayClothes = this.currentClothes;
@@ -112,17 +118,17 @@ export default {
             return category ? category.name : '';
         },
         // 加载分类数据
-        loadCategories() {
-            const storedCategories = uni.getStorageSync('wardrobeCategories');
-            if (storedCategories) {
-                const customCategories = JSON.parse(storedCategories);
-                // 合并预置分类和自定义分类
-                this.categories = [
-                    ...this.categories.filter(c => c.preset),
-                    ...customCategories
-                ];
-            }
-        },
+        // loadCategories() {
+        //     const storedCategories = uni.getStorageSync('wardrobeCategories');
+        //     if (storedCategories) {
+        //         const customCategories = JSON.parse(storedCategories);
+        //         // 合并预置分类和自定义分类
+        //         this.categories = [
+        //             ...this.categories.filter(c => c.preset),
+        //             ...customCategories
+        //         ];
+        //     }
+        // },
         
         // 保存分类数据
         saveCategories() {
@@ -182,7 +188,7 @@ export default {
                                         id: 'others',
                                         preset: false
                                     });
-                                    this.saveCategories();
+                                    // this.saveCategories();
                                 }
                                 
                                 this.clothes.push(newClothes);
